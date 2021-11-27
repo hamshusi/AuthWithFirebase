@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Text, View, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, View, Image, Touchable } from "react-native";
 import {
   TextInput,
   TouchableHighlight,
@@ -7,6 +7,9 @@ import {
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import styled from "styled-components";
+
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
 
 import logo from "../../assets/img/Instagram_logo_800.png";
 
@@ -16,8 +19,14 @@ const Landing = ({ navigation }) => {
   const handleInputChange = (name, text) => {
     setInputs((t) => ({ ...t, [name]: text }));
   };
-  const handleSignIn = () => {
-    console.log("signup");
+  const handleSignOut = async () => {
+    console.log("signout");
+    try {
+      const userCredentials = await signOut(auth);
+      console.log(userCredentials.user);
+    } catch (e) {
+      console.log(e.message);
+    }
   };
 
   return (
@@ -28,58 +37,15 @@ const Landing = ({ navigation }) => {
       }}
     >
       <ContentContainer>
-        <LogoImageView>
-          <LogoImage style={{ resizeMode: "contain" }} source={logo} />
-        </LogoImageView>
-        {/* <HeaderMention>친구들의 사진과 동영상을 보려면 가입하세요.</HeaderMention> */}
-        <FormView>
-          <EmailInput
-            placeholder={"사용자 이름 또는 이메일 주소"}
-            onChangeText={(text) => handleInputChange("nameOrEmail", text)}
-            value={inputs.email}
-          />
-          <PasswordInput
-            placeholder={"비밀번호"}
-            secureTextEntry
-            onChangeText={(text) => handleInputChange("password", text)}
-            value={inputs.password}
-          />
-          <ForgotAccountsView>
-            <ForgotAccountsText
-              style={{
-                paddingHorizontal: 5,
-                color: "#0095f6",
-              }}
-            >
-              비밀번호를 잊으셨나요?
-            </ForgotAccountsText>
-          </ForgotAccountsView>
-          <SignInBtn
-            activeOpacity={0.6}
-            underlayColor="#DDDDDD"
-            onPress={() => handleSignIn()}
-          >
-            <SignInText>로그인</SignInText>
-          </SignInBtn>
-        </FormView>
+        <Text>Landing</Text>
+        <TouchableHighlight
+          activeOpacity={0.6}
+          underlayColor="#DDDDDD"
+          onPress={() => handleSignOut()}
+        >
+          <Text>로그아웃</Text>
+        </TouchableHighlight>
       </ContentContainer>
-      <GoToSignUpView>
-        <JoinText>
-          계정이 없으신가요?&nbsp;
-          <JoinText
-            style={{
-              paddingHorizontal: 5,
-              fontWeight: "bold",
-              color: "#0095f6",
-            }}
-            onPress={() => {
-              navigation.navigate("Register");
-            }}
-          >
-            가입하기
-          </JoinText>
-        </JoinText>
-      </GoToSignUpView>
     </SafeAreaView>
   );
 };

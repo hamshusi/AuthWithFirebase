@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, Image } from "react-native";
 import {
   TextInput,
@@ -8,35 +8,28 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import styled from "styled-components";
 
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
 
 import logo from "../../assets/img/Instagram_logo_800.png";
 
-const Resigster = ({ navigation }) => {
-  const [inputs, setInputs] = useState({ email: "", name: "", password: "" });
+const Login = ({ navigation }) => {
+  const [inputs, setInputs] = useState({ nameOrEmail: "", password: "" });
 
   const handleInputChange = (name, text) => {
     setInputs((t) => ({ ...t, [name]: text }));
   };
-  const handleSignUp = async () => {
-    console.log("signup");
-    const { email, password } = inputs;
-
-    let emailAddr = null;
-    if (
-      /@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(email.toLowerCase().trim()) === false
-    ) {
-      alert("이메일 형식이 올바르지 않습니다.");
-      return false;
-    } else {
-      emailAddr = email.toLowerCase().trim();
-    }
+  const handleSignIn = async () => {
+    console.log("signin");
+    const { nameOrEmail, password } = inputs;
+    let email = null;
+    if (/@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(nameOrEmail.toLowerCase().trim()))
+      email = nameOrEmail.toLowerCase().trim();
 
     try {
-      const userCredentials = await createUserWithEmailAndPassword(
+      const userCredentials = await signInWithEmailAndPassword(
         auth,
-        emailAddr,
+        email,
         password
       );
       console.log(userCredentials.user);
@@ -46,24 +39,22 @@ const Resigster = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: "space-between" }}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        justifyContent: "space-between",
+      }}
+    >
       <ContentContainer>
         <LogoImageView>
           <LogoImage style={{ resizeMode: "contain" }} source={logo} />
         </LogoImageView>
-        <HeaderMention>
-          친구들의 사진과 동영상을 보려면 가입하세요.
-        </HeaderMention>
+        {/* <HeaderMention>친구들의 사진과 동영상을 보려면 가입하세요.</HeaderMention> */}
         <FormView>
           <EmailInput
-            placeholder={"이메일 주소"}
-            onChangeText={(text) => handleInputChange("email", text)}
+            placeholder={"사용자 이름 또는 이메일 주소"}
+            onChangeText={(text) => handleInputChange("nameOrEmail", text)}
             value={inputs.email}
-          />
-          <EmailInput
-            placeholder={"사용자 이름"}
-            onChangeText={(text) => handleInputChange("name", text)}
-            value={inputs.name}
           />
           <PasswordInput
             placeholder={"비밀번호"}
@@ -71,35 +62,42 @@ const Resigster = ({ navigation }) => {
             onChangeText={(text) => handleInputChange("password", text)}
             value={inputs.password}
           />
-          <SignUpBtn
+          <ForgotAccountsView>
+            <ForgotAccountsText
+              style={{
+                paddingHorizontal: 5,
+                color: "#0095f6",
+              }}
+            >
+              비밀번호를 잊으셨나요?
+            </ForgotAccountsText>
+          </ForgotAccountsView>
+          <SignInBtn
             activeOpacity={0.6}
             underlayColor="#DDDDDD"
-            onPress={() => handleSignUp()}
+            onPress={() => handleSignIn()}
           >
-            <SignUpText>가입하기</SignUpText>
-          </SignUpBtn>
+            <SignInText>로그인</SignInText>
+          </SignInBtn>
         </FormView>
-        <HeaderMention>
-          가입하면 Instagram의 약관, 데이터 정책 및 쿠키 정책에 동의하게 됩니다.
-        </HeaderMention>
       </ContentContainer>
-      <GoToSignInView>
-        <LoginText>
-          계정이 있으신가요?&nbsp;
-          <LoginText
+      <GoToSignUpView>
+        <JoinText>
+          계정이 없으신가요?&nbsp;
+          <JoinText
             style={{
               paddingHorizontal: 5,
               fontWeight: "bold",
               color: "#0095f6",
             }}
             onPress={() => {
-              navigation.navigate("Login");
+              navigation.navigate("Register");
             }}
           >
-            로그인
-          </LoginText>
-        </LoginText>
-      </GoToSignInView>
+            가입하기
+          </JoinText>
+        </JoinText>
+      </GoToSignUpView>
     </SafeAreaView>
   );
 };
@@ -107,9 +105,8 @@ const Resigster = ({ navigation }) => {
 const ContentContainer = styled.View`
   padding: 0 30px;
 `;
-
 const LogoImageView = styled.View`
-  margin: 50px 0 0;
+  margin: 50px 0 20px;
   width: 100%;
   align-items: center;
 `;
@@ -139,7 +136,7 @@ const EmailInput = styled(JoinInput)``;
 const NameInput = styled(JoinInput)``;
 const PasswordInput = styled(JoinInput)``;
 
-const SignUpBtn = styled.TouchableHighlight`
+const SignInBtn = styled.TouchableHighlight`
   margin-top: 10px;
   padding: 10px;
   width: 100%;
@@ -147,12 +144,22 @@ const SignUpBtn = styled.TouchableHighlight`
   background: #0095f6;
   border-radius: 4px;
 `;
-const SignUpText = styled.Text`
+const SignInText = styled.Text`
   font-size: 14px;
   color: #fff;
 `;
 
-const GoToSignInView = styled.View`
+const ForgotAccountsView = styled.View`
+  margin: 10px 0;
+  width: 100%;
+  align-items: flex-end;
+`;
+const ForgotAccountsText = styled.Text`
+  font-size: 14px;
+  color: #999;
+`;
+
+const GoToSignUpView = styled.View`
   padding: 15px 0;
   width: 100%;
   align-items: center;
@@ -160,8 +167,8 @@ const GoToSignInView = styled.View`
   border-top-width: 1px;
   border-color: #e3e3e3;
 `;
-const LoginText = styled.Text`
+const JoinText = styled.Text`
   font-size: 14px;
   color: #999;
 `;
-export default Resigster;
+export default Login;

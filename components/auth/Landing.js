@@ -23,9 +23,9 @@ const Landing = ({ navigation }) => {
     console.log("signout");
     try {
       const userCredentials = await signOut(auth);
-      console.log(userCredentials.user);
+      // console.log(userCredentials.user);
     } catch (e) {
-      console.log(e.message);
+      console.log("signouterr", e.message);
     }
   };
 

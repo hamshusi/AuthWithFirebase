@@ -14,8 +14,11 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth } from "../../firebase";
 
 import logo from "../../assets/img/Instagram_logo_800.png";
+import { useDispatch } from "react-redux";
+import { userStateChange } from "../../redux/actions";
 
 const Login = ({ navigation }) => {
+  const dispatch = useDispatch();
   const [inputs, setInputs] = useState({ nameOrEmail: "", password: "" });
 
   const handleInputChange = (name, text) => {
@@ -39,8 +42,11 @@ const Login = ({ navigation }) => {
         res.email,
         res.password
       );
+      console.log(userCredentials);
+      console.log("userCredentials.user", userCredentials.user);
+      dispatch(userStateChange(userCredentials.user));
     } catch (e) {
-      console.log(e.message);
+      console.log("signinerr", e.message);
     }
   };
 

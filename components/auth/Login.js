@@ -9,6 +9,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import styled from "styled-components";
 
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth } from "../../firebase";
 
 import logo from "../../assets/img/Instagram_logo_800.png";
@@ -19,22 +21,82 @@ const Login = ({ navigation }) => {
   const handleInputChange = (name, text) => {
     setInputs((t) => ({ ...t, [name]: text }));
   };
+
   const handleSignIn = async () => {
-    console.log("signin");
-    const { nameOrEmail, password } = inputs;
-    let email = null;
-    if (/@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(nameOrEmail.toLowerCase().trim()))
-      email = nameOrEmail.toLowerCase().trim();
+    let res = vaildInput();
+    if (res.isValid === false) {
+      alert("게정정보가 올바르지 않습니다.");
+      return false;
+    }
+
+    const db = getFirestore();
+    res = await checkUsers(db, res);
+    if (res.isValid === false) return false;
 
     try {
       const userCredentials = await signInWithEmailAndPassword(
         auth,
-        email,
-        password
+        res.email,
+        res.password
       );
-      console.log(userCredentials.user);
     } catch (e) {
       console.log(e.message);
+    }
+  };
+
+  const vaildInput = () => {
+    const { nameOrEmail, password } = inputs;
+
+    let lowerText = nameOrEmail.toLowerCase().trim();
+    let res = {
+      accounts: null,
+      password: null,
+      isValid: false,
+      accountsType: null,
+    };
+    if (lowerText.length === 0) return res;
+    else if (password.length === 0) return res;
+
+    if (/@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(lowerText)) {
+      //email이면
+      res.accounts = lowerText;
+      res.accountsType = "email";
+      res.isValid = true;
+    } else {
+      res.accounts = lowerText;
+      res.accountsType = "name";
+      res.isValid = true;
+    }
+    res.password = password;
+
+    return res;
+  };
+  const checkUsers = async (db, validResponse) => {
+    let qData = [];
+    try {
+      const q = query(
+        collection(db, "users"),
+        where(validResponse.accountsType, "==", validResponse.accounts)
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach((doc) => {
+        return qData.push(doc.data());
+      });
+
+      if (qData.length === 0) {
+        alert("게정정보가 올바르지 않습니다.");
+        validResponse.isValid = false;
+        return validResponse;
+      }
+
+      validResponse.email = qData[0].email;
+      return validResponse;
+    } catch (e) {
+      alert("로그인중 오류가 발생했습니다.");
+      validResponse.isValid = false;
+      return validResponse;
     }
   };
 

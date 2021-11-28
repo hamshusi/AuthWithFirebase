@@ -9,6 +9,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import styled from "styled-components";
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { auth } from "../../firebase";
 
 import logo from "../../assets/img/Instagram_logo_800.png";
@@ -21,28 +23,54 @@ const Resigster = ({ navigation }) => {
   };
   const handleSignUp = async () => {
     console.log("signup");
-    const { email, password } = inputs;
+    const db = getFirestore();
 
-    let emailAddr = null;
-    if (
-      /@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(email.toLowerCase().trim()) === false
-    ) {
-      alert("이메일 형식이 올바르지 않습니다.");
-      return false;
-    } else {
-      emailAddr = email.toLowerCase().trim();
+    const { email, password, name } = inputs;
+    const res = vaildInput();
+    if (res.isValid === false) {
+      alert("올바르지 않은 형식이 존재합니다.");
+      return;
     }
 
     try {
       const userCredentials = await createUserWithEmailAndPassword(
         auth,
-        emailAddr,
-        password
+        res.email,
+        res.password
       );
-      console.log(userCredentials.user);
+
+      await addDoc(collection(db, "users"), {
+        name: res.name,
+        email: res.email,
+      });
     } catch (e) {
       console.log(e.message);
     }
+  };
+  const vaildInput = () => {
+    const { email, password, name } = inputs;
+
+    let lowerEmail = email.toLowerCase().trim();
+    let lowerName = name.toLowerCase().trim();
+    let res = {
+      email: null,
+      name: null,
+      password: null,
+      isValid: false,
+      accountsType: null,
+    };
+    if (lowerEmail.length === 0) return res;
+    else if (lowerName.length === 0) return res;
+    else if (password.length === 0) return res;
+    else if (/@[a-z0-9_-]+\.[a-z0-9_-]+$/.test(lowerText) === false) return res;
+    else if (/\s/.test(password)) return res;
+
+    res.email = lowerEmail;
+    res.name = lowerName;
+    res.password = password;
+    res.isValid = true;
+
+    return res;
   };
 
   return (
